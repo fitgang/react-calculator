@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React calculator</title>
+  <style>
+    body,
+    #calculator {
+      display: grid;
+      place-content: center;
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+    }
+    
+    #calculator {
+      width: 300px;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: repeat(6, 3.5rem);
+      font-size: 1.2rem;
+      font-family: sans-serif;
+      border: 2px solid;
+      padding: 4px;
+      background: #000;
+      color: #fff;
+    }
+    
+    #calculator div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #calculator div:not(#display) {
+      border: 1px solid #00000080;
+      background: #00008b;
+    }
+    
+    #calculator div:not(#display):hover {
+      border: 1px solid #fff;
+    }
+    
+    #calculator div#multiply,
+    #calculator div#divide,
+    #calculator div#subtract,
+    #calculator div#add {
+      background: #c58d00;
+    }
+    
+    #calculator div#clear {
+      background: #c90000;
+    }
+    
+    #calculator div#equals {
+      background: #0070de;
+    }
+    
+    div#display {
+      grid-area: 1/1/2/5;
+      height: 3rem;
+      -webkit-padding-end: 5px;
+      padding-inline-end: 5px;
+      justify-content: flex-end;
+    }
+    
+    #clear {
+      grid-area: 2/1/3/3;
+    }
+    
+    #zero {
+      grid-column-end: span 2;
+    }
+    
+    #equals {
+      grid-area: 5/4/7/5;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="calculator"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+  <script>
+    // components
+    const Comp = (props) => /*#__PURE__*/
+      React.createElement("div", {
+        id: props.id,
+        onClick: props.handleClick
+      }, props.text);
+
+    // main parent
+    class Calculator extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          input: "0"
+        };
+
+        this.handleClick = this.handleClick.bind(this);
+        this.calculate = this.calculate.bind(this);
+      }
+
+      // calculates the mathematical expression and gives the output
+      calculate() {
+        const str = this.state.input;
+
+        // first remove all the extra decimal point from each number
+        // then remove extra spaces and change the expression acc. to the rules
+        // rules are written in the HTML section
+        let rstr = str.
+        replace(/(?<=\d*\.\d+)\./g, "").
+        replaceAll(" ", "").
+        replace(/[\/\*\-\+]{2,}/, (match) =>
+          match.charAt(match.length - 1) === "-" ?
+          match.substr(match.length - 2) :
+          match.charAt(match.length - 1)
+        );
+
+        // tries to give a valid output, if not throws error
+        try {
+          const output = Math.round(eval(rstr) * 10000) / 10000;
+          this.setState({
+            input: output
+          });
+        } catch (err) {
+          this.setState({
+            input: "Error"
+          });
+          throw err;
+        }
+      }
+
+      // handles the input
+      handleClick(event) {
+        if (this.state.input === "0" || this.state.input === "Error")
+          this.setState({
+            input: ""
+          });
+
+        switch (event.target.innerText) {
+
+          // clears the input
+          case "AC":
+            this.setState({
+              input: "0"
+            });
+            break;
+
+            // calculates the mathematical expression
+          case "=":
+            this.calculate();
+            break;
+
+            // to check for more than 1 decimal
+          case ".":
+            this.setState(state => {
+              let s = state.input.trim();
+              let a = s.split(" ");
+              if (/\./.test(a[a.length - 1])) return;
+              return {
+                input: s.charAt(s.length - 1) === "." ? s : s + "."
+              };
+            });
+            break;
+
+            // if an operator is clicked, add spaces before and after it
+          case "+":
+          case "/":
+          case "*":
+          case "-":
+            this.setState(state => ({
+              input: state.input + " " + event.target.innerText + " "
+            }));
+            break;
+          default:
+            this.setState(state => ({
+              input: state.input + event.target.innerText
+            }));
+        }
+      }
+
+      render() {
+
+        // an arr of all the buttons in the calc
+        const arr = [
+          ["display", this.state.input],
+          ["clear", "AC"],
+          ["divide", "/"],
+          ["multiply", "*"],
+          ["seven", 7],
+          ["eight", 8],
+          ["nine", 9],
+          ["subtract", "-"],
+          ["four", 4],
+          ["five", 5],
+          ["six", 6],
+          ["add", "+"],
+          ["one", 1],
+          ["two", 2],
+          ["three", 3],
+          ["zero", 0],
+          ["decimal", "."],
+          ["equals", "="]
+        ];
+
+        return /*#__PURE__*/ (
+          React.createElement(React.Fragment, null,
+            arr.map((a) => /*#__PURE__*/
+              React.createElement(Comp, {
+                id: a[0],
+                text: a[1],
+                handleClick: this.handleClick
+              })
+            )
+          )
+        );
+      }
+    }
+    ReactDOM.render( /*#__PURE__*/ React.createElement(Calculator, null), document.getElementById("calculator"));
+  </script>
+</body>
+
+</html>
